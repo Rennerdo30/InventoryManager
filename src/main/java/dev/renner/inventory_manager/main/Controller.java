@@ -1,24 +1,20 @@
 package dev.renner.inventory_manager.main;
 
+import dev.renner.inventory_manager.data.ItemData;
 import dev.renner.inventory_manager.data.Item;
 import dev.renner.inventory_manager.main.dialogs.ItemDialog;
-import dev.renner.inventory_manager.util.ReadData;
-import dev.renner.inventory_manager.util.ReadDataFake;
-import dev.renner.inventory_manager.util.WriteData;
-import dev.renner.inventory_manager.util.WriteDataFake;
+import dev.renner.inventory_manager.main.dialogs.QRDialog;
+import dev.renner.inventory_manager.util.*;
 import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.value.ObservableValue;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.*;
+import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableRow;
-import javafx.scene.control.TableView;
+import javafx.scene.input.MouseButton;
 import javafx.stage.Stage;
-import javafx.util.Callback;
 
+import java.awt.*;
 import java.net.URL;
 import java.util.ResourceBundle;
 
@@ -53,76 +49,80 @@ public class Controller implements Initializable {
     @FXML
     TableColumn<Item, String> tableColumnBuyDate;
 
-    private ObservableList<Item> tableData;
     private dev.renner.inventory_manager.util.I18N i18n;
+    private ItemData itemData = readData.readData();
 
     @Override
     public void initialize(URL location, ResourceBundle bundle) {
         this.i18n = new dev.renner.inventory_manager.util.I18N(bundle);
-        this.tableData = FXCollections.observableArrayList();
-        this.table.setItems(tableData);
-        this.closeBtn.setText(bundle.getString(I18N.CLOSE_BUTTON.getKey()));
-        this.newItemBtn.setText(bundle.getString(I18N.CREATE_ITEM_BUTTON.getKey()));
-        this.newCategoryBtn.setText(bundle.getString(I18N.CREATE_CATEGORY_BUTTON.getKey()));
-        this.newLocationBtn.setText(bundle.getString(I18N.CREATE_LOCATION_BUTTON.getKey()));
+        this.table.setItems(itemData.items);
 
-        tableColumnID.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<Item, String>, ObservableValue<String>>() {
-            @Override
-            public ObservableValue<String> call(TableColumn.CellDataFeatures<Item, String> param) {
-                return new SimpleStringProperty(param.getValue().getId().toString());
-            }
-        });
+        this.closeBtn.setText(this.i18n.getMainWindowMenuFileCloseBtn());
+        this.newItemBtn.setText(this.i18n.getMainWindowMenuFileNewItemBtn());
+        this.newCategoryBtn.setText(this.i18n.getMainWindowMenuFileNewCategoryBtn());
+        this.newLocationBtn.setText(this.i18n.getMainWindowMenuFileNewLocationBtn());
 
-        tableColumnName.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<Item, String>, ObservableValue<String>>() {
-            @Override
-            public ObservableValue<String> call(TableColumn.CellDataFeatures<Item, String> param) {
-                return new SimpleStringProperty(param.getValue().getName());
-            }
+
+        this.tableColumnID.setText(this.i18n.getMainWindowTableRowID());
+        this.tableColumnName.setText(this.i18n.getMainWindowTableRowName());
+        this.tableColumnCategory.setText(this.i18n.getMainWindowTableRowCategory());
+        this.tableColumnManufacturer.setText(this.i18n.getMainWindowTableRowManufacturer());
+        this.tableColumnBuyPrice.setText(this.i18n.getMainWindowTableRowBuyPrice());
+        this.tableColumnBuyDate.setText(this.i18n.getMainWindowTableRowBuyDate());
+
+        tableColumnID.setCellValueFactory((param) -> {
+            return new SimpleStringProperty(param.getValue().getId().toString());
         });
-        tableColumnManufacturer.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<Item, String>, ObservableValue<String>>() {
-            @Override
-            public ObservableValue<String> call(TableColumn.CellDataFeatures<Item, String> param) {
-                return new SimpleStringProperty(param.getValue().getManufacturer());
-            }
+        tableColumnName.setCellValueFactory((param) -> {
+            return new SimpleStringProperty(param.getValue().getName());
         });
-        tableColumnBuyPrice.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<Item, String>, ObservableValue<String>>() {
-            @Override
-            public ObservableValue<String> call(TableColumn.CellDataFeatures<Item, String> param) {
-                return new SimpleStringProperty("" + param.getValue().getBuyPrice());
-            }
+        tableColumnCategory.setCellValueFactory((param) -> {
+            return new SimpleStringProperty(param.getValue().getCategory().getName());
         });
-        tableColumnBuyDate.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<Item, String>, ObservableValue<String>>() {
-            @Override
-            public ObservableValue<String> call(TableColumn.CellDataFeatures<Item, String> param) {
-                return new SimpleStringProperty(param.getValue().getBuyDate().toString());
-            }
+        tableColumnManufacturer.setCellValueFactory((param) -> {
+            return new SimpleStringProperty(param.getValue().getManufacturer());
+        });
+        tableColumnBuyPrice.setCellValueFactory((param) -> {
+            return new SimpleStringProperty("" + param.getValue().getBuyPrice());
+        });
+        tableColumnBuyDate.setCellValueFactory((param) -> {
+            return new SimpleStringProperty(param.getValue().getBuyDate().toString());
         });
 
-        table.setRowFactory( tv -> {
+
+        final ContextMenu tableRowContextMenu = new ContextMenu();
+        final MenuItem generateQrCodeBtn = new MenuItem("Generate QR-Code");
+        generateQrCodeBtn.setOnAction((e) -> {
+            QRDialog.showAndWait(this.i18n, (Item) this.table.getSelectionModel().getSelectedItem());
+        });
+
+        tableRowContextMenu.getItems().add(generateQrCodeBtn);
+
+        table.setRowFactory(tv -> {
             TableRow<Item> row = new TableRow<>();
             row.setOnMouseClicked(event -> {
-                if (event.getClickCount() == 2 && (! row.isEmpty()) ) {
+                if (event.getClickCount() == 2 && (!row.isEmpty())) {
                     Item oldItem = row.getItem();
-                    Item newItem = ItemDialog.showAndWait(this.i18n, oldItem);
+                    Item newItem = ItemDialog.showAndWait(this.i18n, oldItem, this.itemData);
 
-                    if(!oldItem.equals(newItem))
-                    {
+                    if (!oldItem.equals(newItem) && newItem != null) {
                         this.removeItemFromTable(oldItem);
                         this.addItemToTable(newItem);
                     }
 
                 }
             });
-            return row ;
+            row.setContextMenu(tableRowContextMenu);
+            return row;
         });
 
     }
 
     @FXML
     public void newItemAction() {
-        Item item = ItemDialog.showAndWait(this.i18n);
+        Item item = ItemDialog.showAndWait(this.i18n, this.itemData);
         if (item != null)
-            this.tableData.add(item);
+            this.itemData.items.add(item);
     }
 
     @FXML
@@ -131,17 +131,16 @@ public class Controller implements Initializable {
     }
 
 
-    private void addItemToTable(Item item)
-    {
-        if(item != null)
-            this.tableData.add(item);
+    private void addItemToTable(Item item) {
+        if (item != null) {
+            this.itemData.items.add(item);
+            this.table.getSelectionModel().select(item);
+        }
     }
 
-    private void removeItemFromTable(Item item)
-    {
-        if(item != null) {
-            this.tableData.remove(item);
-            this.table.getSelectionModel().select(item);
+    private void removeItemFromTable(Item item) {
+        if (item != null) {
+            this.itemData.items.remove(item);
         }
     }
 

@@ -20,9 +20,8 @@ import java.util.Map;
  */
 public class QRGenerator {
 
-    public static void generateQrCode(String data) {
-        String myCodeText = "http://crunchify.com/";
-        String filePath = "/Users/<userName>/Documents/CrunchifyQR.png";
+    public static File generateQrCode(String data) {
+        String filePath = "qr.png";
         int size = 250;
         String fileType = "png";
         File myFile = new File(filePath);
@@ -36,7 +35,7 @@ public class QRGenerator {
             hintMap.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.L);
 
             QRCodeWriter qrCodeWriter = new QRCodeWriter();
-            BitMatrix byteMatrix = qrCodeWriter.encode(myCodeText, BarcodeFormat.QR_CODE, size,
+            BitMatrix byteMatrix = qrCodeWriter.encode(data, BarcodeFormat.QR_CODE, size,
                     size, hintMap);
             int CrunchifyWidth = byteMatrix.getWidth();
             BufferedImage image = new BufferedImage(CrunchifyWidth, CrunchifyWidth,
@@ -61,7 +60,7 @@ public class QRGenerator {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println("\n\nYou have successfully created QR Code.");
+        return myFile;
     }
 
 

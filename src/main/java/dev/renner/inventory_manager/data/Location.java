@@ -9,4 +9,23 @@ public class Location {
     private UUID id;
     private String name;
 
+    public Location() {
+        this.id = UUID.randomUUID();
+        this.name = "";
+    }
+
+    public Location(String name) {
+        this.id = UUID.randomUUID();
+        this.name = name;
+    }
+
+    public UUID getId() {
+        return this.id;
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
+
 }

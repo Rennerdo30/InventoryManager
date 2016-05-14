@@ -11,12 +11,19 @@ public class Category {
 
     public Category()
     {
+        this.id = UUID.randomUUID();
+        this.name = "";
     }
 
     public Category(String name)
     {
         this.id = UUID.randomUUID();
         this.name = name;
+    }
+
+    public UUID getId()
+    {
+        return this.id;
     }
 
     public String getName()
@@ -30,4 +37,15 @@ public class Category {
         return  this.name;
     }
 
+    @Override
+    public boolean equals(Object obj)
+    {
+        if(!(obj instanceof Category))
+            return false;
+
+        Category tmpCat = (Category) obj;
+
+        return this.getName().equals(tmpCat) && this.getId().equals(tmpCat.getId());
+
+    }
 }

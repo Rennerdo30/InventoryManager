@@ -9,6 +9,7 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
 import javafx.util.Callback;
 
 import java.util.ArrayList;
@@ -33,6 +34,14 @@ public class LocationDialog {
 
         VBox vBox = new VBox();
         GridPane grid = new GridPane();
+
+        Label idLabel = new Label();
+        TextField idText = new TextField();
+        idText.setEditable(false);
+
+        Label nameLabel = new Label();
+        TextField nameText = new TextField();
+
 
 
         vBox.getChildren().add(grid);

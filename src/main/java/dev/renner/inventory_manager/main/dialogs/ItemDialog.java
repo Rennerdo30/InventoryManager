@@ -1,16 +1,17 @@
 package dev.renner.inventory_manager.main.dialogs;
 
 import dev.renner.inventory_manager.data.Category;
+import dev.renner.inventory_manager.data.ItemData;
 import dev.renner.inventory_manager.data.Item;
-import dev.renner.inventory_manager.main.Controller;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.util.Callback;
 
-import java.util.ArrayList;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -20,27 +21,31 @@ import java.util.UUID;
 public class ItemDialog {
 
 
-    public static Item showAndWait(dev.renner.inventory_manager.util.I18N i18n) {
-        return ItemDialog.showAndWait(i18n, null);
+    public static Item showAndWait(dev.renner.inventory_manager.util.I18N i18n, ItemData itemData) {
+        return ItemDialog.showAndWait(i18n, null, itemData);
     }
 
-    public static Item showAndWait(dev.renner.inventory_manager.util.I18N i18n, Item oldItem) {
-
-        ArrayList<Category> categories = Controller.readData.getCategories();
+    public static Item showAndWait(dev.renner.inventory_manager.util.I18N i18n, Item oldItem, ItemData itemData) {
 
         Dialog<Item> itemDialog = new Dialog<>();
         itemDialog.setTitle(i18n.getItemDialogTitle());
 
 
-
         VBox vBox = new VBox();
         GridPane grid = new GridPane();
+        grid.setVgap(5);
+        grid.setHgap(10);
+
+        Label idLabel = new Label(i18n.getItemDialogID());
+        TextField idText = new TextField();
+        idText.setEditable(false);
+
         Label nameLabel = new Label(i18n.getItemDialogName());
         TextField nameText = new TextField();
 
         Label categoryLabel = new Label(i18n.getItemDialogCategory());
-        Button newCategoryButton = new Button();
         ComboBox<Category> categoryComboBox = new ComboBox<>();
+        categoryComboBox.setMaxWidth(Double.MAX_VALUE);
         categoryComboBox.setCellFactory(new Callback<ListView<Category>, ListCell<Category>>() {
             @Override
             public ListCell<Category> call(ListView<Category> param) {
@@ -57,23 +62,38 @@ public class ItemDialog {
                 };
             }
         });
-        ObservableList<Category> categoryComboBoxData = FXCollections.observableArrayList(categories);
-        categoryComboBox.setItems(categoryComboBoxData);
-        if (categoryComboBoxData.size() > 0)
+        categoryComboBox.setItems(itemData.categories);
+        if (itemData.categories.size() > 0)
             categoryComboBox.getSelectionModel().select(0);
 
         Label manufacturerLabel = new Label(i18n.getItemDialogManufacturer());
         TextField manufacturerText = new TextField();
 
-        grid.add(nameLabel, 0, 0);
-        grid.add(nameText, 1, 0);
+        Label buyPriceLabel = new Label(i18n.getItemDialogManufacturer());
+        TextField buyPriceText = new TextField();
+        buyPriceText.setText("0.0");
 
-        grid.add(categoryLabel, 0, 1);
-        grid.add(categoryComboBox, 1, 1);
-        grid.add(newCategoryButton, 2, 1);
+        Label buyDateLabel = new Label(i18n.getItemDialogManufacturer());
+        DatePicker buyDateDate = new DatePicker();
+        buyDateDate.setValue(LocalDate.now());
 
-        grid.add(manufacturerLabel, 0, 2);
-        grid.add(manufacturerText, 1, 2);
+        grid.add(idLabel, 0, 0);
+        grid.add(idText, 1, 0);
+
+        grid.add(nameLabel, 0, 1);
+        grid.add(nameText, 1, 1);
+
+        grid.add(categoryLabel, 0, 2);
+        grid.add(categoryComboBox, 1, 2);
+
+        grid.add(manufacturerLabel, 0, 3);
+        grid.add(manufacturerText, 1, 3);
+
+        grid.add(buyPriceLabel, 0, 4);
+        grid.add(buyPriceText, 1, 4);
+
+        grid.add(buyDateLabel, 0, 5);
+        grid.add(buyDateDate, 1, 5);
 
         vBox.getChildren().add(grid);
 
@@ -83,27 +103,33 @@ public class ItemDialog {
         itemDialog.getDialogPane().getButtonTypes().add(buttonTypeOk);
         itemDialog.getDialogPane().getButtonTypes().add(buttonTypeCancel);
 
-        itemDialog.setResultConverter(new Callback<ButtonType, Item>() {
-            @Override
-            public Item call(ButtonType b) {
-                if (b == buttonTypeOk) {
-                    Item item = new Item();
-                    item.setId(oldItem == null ? UUID.randomUUID() : oldItem.getId());
-                    item.setName(nameText.getText());
-                    item.setCategory(categoryComboBox.getSelectionModel().getSelectedItem());
-                    item.setManufacturer(manufacturerText.getText());
-                    return item;
-                }
-                return null;
+        itemDialog.setResultConverter((b) -> {
+            if (b == buttonTypeOk) {
+                Item item = new Item();
+                item.setId(UUID.fromString(idText.getText()));
+                item.setName(nameText.getText());
+                item.setCategory(categoryComboBox.getSelectionModel().getSelectedItem());
+                item.setManufacturer(manufacturerText.getText());
+                item.setBuyPrice(Double.parseDouble(buyPriceText.getText().replace(",", ".")));
 
+                LocalDate localDate = buyDateDate.getValue();
+                Instant instant = Instant.from(localDate.atStartOfDay(ZoneId.systemDefault()));
+                Date date = Date.from(instant);
+                item.setBuyDate(date);
+                return item;
             }
+            return null;
         });
 
-        if(oldItem != null)
-        {
+        idText.setText(UUID.randomUUID().toString());
+
+        if (oldItem != null) {
+            idText.setText(oldItem.getId().toString());
             nameText.setText(oldItem.getName());
             categoryComboBox.getSelectionModel().select(oldItem.getCategory());
             manufacturerText.setText(oldItem.getManufacturer());
+            buyPriceText.setText(oldItem.getBuyPrice() + "");
+            buyDateDate.setValue(oldItem.getBuyDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
         }
 
         Optional<Item> result = itemDialog.showAndWait();
