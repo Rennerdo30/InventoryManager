@@ -50,6 +50,8 @@ public class QRDialog {
 
         Optional<Boolean> result = itemDialog.showAndWait();
 
+        qrImage.delete();
+
     }
 
 
