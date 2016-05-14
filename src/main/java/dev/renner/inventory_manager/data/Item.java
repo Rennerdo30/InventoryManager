@@ -1,12 +1,13 @@
 package dev.renner.inventory_manager.data;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.UUID;
 
 /**
  * Created by renne on 14.05.2016.
  */
-public class Item {
+public class Item implements Serializable {
     private UUID id;
     private String name;
     private Category category;

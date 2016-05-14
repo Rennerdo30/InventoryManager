@@ -62,7 +62,7 @@ public class ItemDialog {
                 };
             }
         });
-        categoryComboBox.setItems(itemData.categories);
+        categoryComboBox.setItems(itemData.getCategories());
         if (itemData.categories.size() > 0)
             categoryComboBox.getSelectionModel().select(0);
 

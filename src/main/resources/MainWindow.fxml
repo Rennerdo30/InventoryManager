@@ -16,12 +16,14 @@
                   <MenuItem fx:id="newItemBtn" mnemonicParsing="false" onAction="#newItemAction" text="New item" />
                   <MenuItem fx:id="newLocationBtn" mnemonicParsing="false" text="New location" />
                   <MenuItem fx:id="newCategoryBtn" mnemonicParsing="false" text="New category" />
+                  <MenuItem fx:id="openDbBtn" mnemonicParsing="false" onAction="#loadDataAction" text="Open db" />
+                  <MenuItem fx:id="saveDbBtn" mnemonicParsing="false" onAction="#saveDataAction" text="Save db" />
               <MenuItem fx:id="closeBtn" mnemonicParsing="false" onAction="#closeAction" text="Close" />
             </items>
           </Menu>
           <Menu mnemonicParsing="false" text="Edit">
             <items>
-              <MenuItem mnemonicParsing="false" text="Delete" />
+              <MenuItem fx:id="DeleteBtn" mnemonicParsing="false" onAction="#removeItemAction" text="Delete" />
             </items>
           </Menu>
             <Menu mnemonicParsing="false" text="Settings">

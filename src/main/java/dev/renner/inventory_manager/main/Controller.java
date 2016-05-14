@@ -9,19 +9,16 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
-import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
-import javafx.scene.input.MouseButton;
 import javafx.stage.Stage;
 
-import java.awt.*;
 import java.net.URL;
 import java.util.ResourceBundle;
 
 public class Controller implements Initializable {
 
-    public static ReadData readData = new ReadDataFake();
-    public static WriteData writeData = new WriteDataFake();
+    public static ReadData readData = new ReadDataFromFile();
+    public static WriteData writeData = new WriteDataToFile();
     public static Stage stage;
 
     @FXML
@@ -35,7 +32,7 @@ public class Controller implements Initializable {
 
     //Table
     @FXML
-    TableView table;
+    TableView<Item> table;
     @FXML
     TableColumn<Item, String> tableColumnID;
     @FXML
@@ -55,7 +52,7 @@ public class Controller implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle bundle) {
         this.i18n = new dev.renner.inventory_manager.util.I18N(bundle);
-        this.table.setItems(itemData.items);
+        this.table.setItems(itemData.getItems());
 
         this.closeBtn.setText(this.i18n.getMainWindowMenuFileCloseBtn());
         this.newItemBtn.setText(this.i18n.getMainWindowMenuFileNewItemBtn());
@@ -77,7 +74,12 @@ public class Controller implements Initializable {
             return new SimpleStringProperty(param.getValue().getName());
         });
         tableColumnCategory.setCellValueFactory((param) -> {
-            return new SimpleStringProperty(param.getValue().getCategory().getName());
+
+            if (param.getValue().getCategory() != null)
+                return new SimpleStringProperty(param.getValue().getCategory().getName());
+
+            return new SimpleStringProperty("n/a");
+
         });
         tableColumnManufacturer.setCellValueFactory((param) -> {
             return new SimpleStringProperty(param.getValue().getManufacturer());
@@ -92,11 +94,27 @@ public class Controller implements Initializable {
 
         final ContextMenu tableRowContextMenu = new ContextMenu();
         final MenuItem generateQrCodeBtn = new MenuItem("Generate QR-Code");
+        final MenuItem deleteBtn = new MenuItem("Delete");
+        final MenuItem editBtn = new MenuItem("Edit");
         generateQrCodeBtn.setOnAction((e) -> {
-            QRDialog.showAndWait(this.i18n, (Item) this.table.getSelectionModel().getSelectedItem());
+            QRDialog.showAndWait(this.i18n, this.table.getSelectionModel().getSelectedItem());
+        });
+        deleteBtn.setOnAction((e) -> {
+            this.removeItemFromTable(this.table.getSelectionModel().getSelectedItem());
+        });
+        editBtn.setOnAction((e) -> {
+            Item oldItem = this.table.getSelectionModel().getSelectedItem();
+            Item newItem = ItemDialog.showAndWait(this.i18n, oldItem, this.itemData);
+
+            if (!oldItem.equals(newItem) && newItem != null) {
+                this.removeItemFromTable(oldItem);
+                this.addItemToTable(newItem);
+            }
         });
 
         tableRowContextMenu.getItems().add(generateQrCodeBtn);
+        tableRowContextMenu.getItems().add(editBtn);
+        tableRowContextMenu.getItems().add(deleteBtn);
 
         table.setRowFactory(tv -> {
             TableRow<Item> row = new TableRow<>();
@@ -122,7 +140,7 @@ public class Controller implements Initializable {
     public void newItemAction() {
         Item item = ItemDialog.showAndWait(this.i18n, this.itemData);
         if (item != null)
-            this.itemData.items.add(item);
+            this.addItemToTable(item);
     }
 
     @FXML
@@ -130,10 +148,26 @@ public class Controller implements Initializable {
         Controller.stage.close();
     }
 
+    @FXML
+    public void saveDataAction() {
+        writeData.writeData(this.itemData);
+    }
+
+    @FXML
+    public void loadDataAction() {
+        this.itemData = readData.readData();
+        this.table.setItems(itemData.getItems());
+    }
+
+    @FXML
+    public void removeItemAction() {
+        this.removeItemFromTable(this.table.getSelectionModel().getSelectedItem());
+    }
 
     private void addItemToTable(Item item) {
         if (item != null) {
             this.itemData.items.add(item);
+            this.table.setItems(this.itemData.getItems());
             this.table.getSelectionModel().select(item);
         }
     }
@@ -141,6 +175,7 @@ public class Controller implements Initializable {
     private void removeItemFromTable(Item item) {
         if (item != null) {
             this.itemData.items.remove(item);
+            this.table.setItems(this.itemData.getItems());
         }
     }
 
